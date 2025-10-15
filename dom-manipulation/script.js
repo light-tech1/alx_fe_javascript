@@ -26,7 +26,7 @@ function showRandomQuote() {
   `;
 }
 
-// Function to add a new quote dynamically
+// Function to add a new quote (from inline inputs)
 function addQuote() {
   const textInput = document.getElementById("newQuoteText");
   const categoryInput = document.getElementById("newQuoteCategory");
@@ -39,14 +39,12 @@ function addQuote() {
     return;
   }
 
-  // Add new quote to array
   quotes.push({ text, category });
 
-  // Clear input fields
+  // Clear fields and show newly added quote
   textInput.value = "";
   categoryInput.value = "";
 
-  // Display the newly added quote
   quoteDisplay.innerHTML = `
     <blockquote>"${text}"</blockquote>
     <p><em>Category: ${category}</em></p>
@@ -55,8 +53,42 @@ function addQuote() {
   alert("New quote added successfully!");
 }
 
-// Event listener for showing random quote
+// Function to dynamically create another add-quote form
+function createAddQuoteForm() {
+  const form = document.createElement("form");
+  form.id = "addQuoteForm";
+  form.innerHTML = `
+    <h2>Add a New Quote</h2>
+    <label>Quote:</label><br>
+    <textarea id="quoteText" rows="3" cols="40" placeholder="Enter quote text" required></textarea><br><br>
+    <label>Category:</label><br>
+    <input type="text" id="quoteCategory" placeholder="Enter quote category" required><br><br>
+    <button type="submit">Add Quote</button>
+  `;
+
+  document.body.appendChild(form);
+
+  // Handle form submission
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const text = document.getElementById("quoteText").value.trim();
+    const category = document.getElementById("quoteCategory").value.trim();
+
+    if (text && category) {
+      quotes.push({ text, category });
+      alert("New quote added via dynamic form!");
+      form.reset();
+      showRandomQuote();
+    } else {
+      alert("Please fill in both fields.");
+    }
+  });
+}
+
+// Event listener for "Show New Quote" button
 newQuoteBtn.addEventListener("click", showRandomQuote);
 
-// Initialize display
+// Initialize
 showRandomQuote();
+createAddQuoteForm();
