@@ -1,5 +1,5 @@
 // -----------------------------
-// Simulated Dynamic Quote App
+// Dynamic Quote Generator with Server Sync
 // -----------------------------
 
 let quotes = JSON.parse(localStorage.getItem("quotes")) || [
@@ -7,22 +7,29 @@ let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "Life is what happens when you’re busy making other plans.", category: "Life" }
 ];
 
-// DOM elements
 const app = document.getElementById("quoteApp");
 
 // -----------------------------
-// INITIALIZE APP
+// INITIALIZE
 // -----------------------------
 function init() {
   createAddQuoteForm();
   populateCategories();
   displayQuotes(quotes);
-  fetchQuotesFromServer();
-  setInterval(fetchQuotesFromServer, 30000); // auto-sync every 30s
+
+  // Load saved filter
+  const savedFilter = localStorage.getItem("selectedCategory");
+  if (savedFilter) document.getElementById("categoryFilter").value = savedFilter;
+
+  // Initial sync
+  syncQuotes();
+
+  // Auto-sync every 30 seconds
+  setInterval(syncQuotes, 30000);
 }
 
 // -----------------------------
-// CREATE ADD QUOTE FORM + FILTER
+// CREATE FORM + FILTER
 // -----------------------------
 function createAddQuoteForm() {
   app.innerHTML = `
@@ -33,9 +40,12 @@ function createAddQuoteForm() {
       <button type="submit">Add Quote</button>
     </form>
 
-    <select id="categoryFilter" onchange="filterQuotes()">
-      <option value="all">All Categories</option>
-    </select>
+    <div style="margin-top:10px;">
+      <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+      </select>
+      <button onclick="syncQuotes()">🔄 Sync Now</button>
+    </div>
 
     <div id="quoteList"></div>
     <div id="syncStatus"></div>
@@ -57,6 +67,11 @@ function displayQuotes(filteredQuotes) {
   filteredQuotes.forEach(q => {
     const div = document.createElement("div");
     div.className = "quote-card";
+    div.style.margin = "10px 0";
+    div.style.padding = "10px";
+    div.style.border = "1px solid #ddd";
+    div.style.borderRadius = "5px";
+    div.style.background = "#fafafa";
     div.innerHTML = `<strong>${q.text}</strong><br><em>${q.category}</em>`;
     quoteList.appendChild(div);
   });
@@ -81,7 +96,7 @@ function addQuote(e) {
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
 
-  syncWithServer();
+  syncQuotes(); // sync immediately after adding
 }
 
 // -----------------------------
@@ -90,6 +105,7 @@ function addQuote(e) {
 function populateCategories() {
   const categories = [...new Set(quotes.map(q => q.category))];
   const filter = document.getElementById("categoryFilter");
+  if (!filter) return;
   filter.innerHTML = `<option value="all">All Categories</option>`;
   categories.forEach(cat => {
     const option = document.createElement("option");
@@ -114,62 +130,66 @@ function filterQuotes() {
 }
 
 // -----------------------------
-// SIMULATE FETCHING FROM SERVER
+// SERVER SYNC SYSTEM
+// -----------------------------
+async function syncQuotes() {
+  updateStatus("🔁 Syncing with server...");
+
+  try {
+    await syncWithServer();       // Upload local quotes
+    await fetchQuotesFromServer(); // Fetch and merge server data
+    updateStatus("✅ Sync complete!");
+  } catch (error) {
+    updateStatus("⚠️ Sync failed: " + error.message);
+  }
+}
+
+// -----------------------------
+// FETCH FROM SERVER (GET)
 // -----------------------------
 async function fetchQuotesFromServer() {
-  try {
-    updateStatus("Fetching latest quotes from server...");
+  const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+  const data = await response.json();
 
-    // simulate server fetch
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts");
-    const data = await response.json();
+  // Simulate received server quotes
+  const serverQuotes = data.slice(0, 3).map(post => ({
+    text: post.title,
+    category: "Server"
+  }));
 
-    // simulate server quotes
-    const serverQuotes = data.slice(0, 3).map(post => ({
-      text: post.title,
-      category: "Server"
-    }));
+  // Conflict resolution: server wins
+  const combined = [...serverQuotes, ...quotes];
+  quotes = Array.from(new Map(combined.map(q => [q.text, q])).values());
 
-    // Conflict resolution (server wins)
-    quotes = [...serverQuotes, ...quotes];
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-
-    populateCategories();
-    filterQuotes();
-    updateStatus("✅ Quotes synced with server.");
-  } catch (error) {
-    updateStatus("❌ Failed to sync with server.");
-  }
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+  populateCategories();
+  filterQuotes();
 }
 
 // -----------------------------
-// SIMULATE POSTING TO SERVER
+// SEND TO SERVER (POST)
 // -----------------------------
 async function syncWithServer() {
-  try {
-    updateStatus("Uploading quotes to server...");
-
-    await fetch("https://jsonplaceholder.typicode.com/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(quotes)
-    });
-
-    updateStatus("✅ Local quotes synced successfully.");
-  } catch (error) {
-    updateStatus("⚠️ Sync failed. Will retry later.");
-  }
+  await fetch("https://jsonplaceholder.typicode.com/posts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(quotes)
+  });
 }
 
 // -----------------------------
-// STATUS UPDATES
+// STATUS MESSAGES
 // -----------------------------
 function updateStatus(message) {
   const status = document.getElementById("syncStatus");
   status.textContent = message;
-  status.style.color = message.includes("✅") ? "green" : message.includes("❌") ? "red" : "orange";
+  status.style.color = message.includes("✅")
+    ? "green"
+    : message.includes("⚠️")
+    ? "orange"
+    : "blue";
 }
 
 // -----------------------------
