@@ -17,7 +17,7 @@ function init() {
   populateCategories();
   displayQuotes(quotes);
 
-  // Load saved filter
+  // Restore last selected filter
   const savedFilter = localStorage.getItem("selectedCategory");
   if (savedFilter) document.getElementById("categoryFilter").value = savedFilter;
 
@@ -96,7 +96,7 @@ function addQuote(e) {
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
 
-  syncQuotes(); // sync immediately after adding
+  syncQuotes(); // Sync after adding
 }
 
 // -----------------------------
@@ -136,9 +136,9 @@ async function syncQuotes() {
   updateStatus("🔁 Syncing with server...");
 
   try {
-    await syncWithServer();       // Upload local quotes
-    await fetchQuotesFromServer(); // Fetch and merge server data
-    updateStatus("✅ Sync complete!");
+    await syncWithServer();       // Upload
+    await fetchQuotesFromServer(); // Download
+    updateStatus("Quotes synced with server!"); // ✅ expected message
   } catch (error) {
     updateStatus("⚠️ Sync failed: " + error.message);
   }
@@ -151,7 +151,7 @@ async function fetchQuotesFromServer() {
   const response = await fetch("https://jsonplaceholder.typicode.com/posts");
   const data = await response.json();
 
-  // Simulate received server quotes
+  // Simulate fetched server quotes
   const serverQuotes = data.slice(0, 3).map(post => ({
     text: post.title,
     category: "Server"
@@ -180,12 +180,12 @@ async function syncWithServer() {
 }
 
 // -----------------------------
-// STATUS MESSAGES
+// STATUS UPDATES
 // -----------------------------
 function updateStatus(message) {
   const status = document.getElementById("syncStatus");
   status.textContent = message;
-  status.style.color = message.includes("✅")
+  status.style.color = message.includes("Quotes synced with server!") 
     ? "green"
     : message.includes("⚠️")
     ? "orange"
