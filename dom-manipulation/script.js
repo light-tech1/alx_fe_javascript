@@ -1,4 +1,4 @@
-let quotes = JSON.parse(localStorage.getItem("quotes")) || [
+let quotes = [
   { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
   { text: "Do one thing every day that scares you.", category: "Courage" },
@@ -7,10 +7,6 @@ let quotes = JSON.parse(localStorage.getItem("quotes")) || [
 
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteBtn = document.getElementById("newQuote");
-
-function saveQuotes() {
-  localStorage.setItem("quotes", JSON.stringify(quotes));
-}
 
 function showRandomQuote() {
   if (quotes.length === 0) {
@@ -40,7 +36,6 @@ function addQuote() {
   }
 
   quotes.push({ text, category });
-  saveQuotes(); 
 
   textInput.value = "";
   categoryInput.value = "";
@@ -69,13 +64,13 @@ function createAddQuoteForm() {
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
+
     const text = document.getElementById("quoteText").value.trim();
     const category = document.getElementById("quoteCategory").value.trim();
 
     if (text && category) {
       quotes.push({ text, category });
-      saveQuotes(); 
-      alert("New quote added via form!");
+      alert("New quote added via dynamic form!");
       form.reset();
       showRandomQuote();
     } else {
