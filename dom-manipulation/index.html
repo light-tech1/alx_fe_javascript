@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dynamic Quote Generator</title>
 </head>
 <body>
@@ -11,14 +11,16 @@
   <div id="quoteDisplay"></div>
   <button id="newQuote">Show New Quote</button>
 
-
   <h2>Add a New Quote</h2>
-  <div>
-    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-    <button onclick="addQuote()">Add Quote</button>
-  </div>
+  <div id="addQuoteSection"></div> <!-- dynamically generated form -->
 
+  <h2>Filter by Category</h2>
+  <select id="categoryFilter">
+    <option value="All">All Categories</option>
+  </select>
+
+  <h2>All Quotes</h2>
+  <ul id="quoteList"></ul>
 
   <h2>Import / Export Quotes</h2>
   <button onclick="exportToJsonFile()">Export Quotes</button>
